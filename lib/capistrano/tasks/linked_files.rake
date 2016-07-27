@@ -18,12 +18,24 @@ namespace :linked_files do
     invoke 'linked_files:upload:dirs'
   end
 
+  namespace :prepare do 
+    desc 'prepare empty linked directories on remote server'
+    task :dirs do 
+      on fetch(:upload_servers) do
+        info "Preparing directories to: #{fetch(:upload_roles)}"
+        fetch(:linked_dirs, []).each do |dir|
+          execute "mkdir -p #{shared_path}/#{dir}" 
+        end
+      end
+    end
+  end
+
   namespace :upload do
     task :files do
       on fetch(:upload_servers) do
         info "Uploading files to: #{fetch(:upload_roles)}"
         fetch(:linked_files, []).each do |file|
-          upload! file, "#{shared_path}/#{file}"
+          upload! File.join(fetch(:local_path), file), "#{shared_path}/#{file}"
         end
       end
     end
@@ -32,7 +44,7 @@ namespace :linked_files do
       on fetch(:upload_servers) do
         info "Uploading directories to: #{fetch(:upload_roles)}"
         fetch(:linked_dirs, []).each do |dir|
-          upload! dir, "#{shared_path}/", recursive: true
+          upload! File.join(fetch(:local_path), dir), "#{shared_path}/", recursive: true
         end
       end
     end
